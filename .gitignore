@@ -44,9 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FVM Version Cache
-.fvm/
+# FVM SDK本体
+.fvm/flutter_sdk
 
-echo ".fvm/flutter_sdk" >> .gitignore
-echo "*.g.dart" >> .gitignore
-echo ".env" >> .gitignore
+# Riverpod / Freezed 自動生成ファイル
+*.g.dart
+
+# 環境変数ファイル
+.env
