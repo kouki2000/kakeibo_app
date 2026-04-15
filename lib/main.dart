@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:kakeibo_app/app/router.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const KakeiboApp());
 }
 
-/// アプリのルートWidget
-class MyApp extends StatelessWidget {
+/// アプリのルートウィジェット
+class KakeiboApp extends StatelessWidget {
   /// コンストラクタ
-  const MyApp({super.key});
+  const KakeiboApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: '家計簿アプリ',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+        useMaterial3: true,
       ),
-      home: const Scaffold(body: Center(child: Text('家計簿アプリ'))),
+      routerConfig: appRouter,
     );
   }
 }
