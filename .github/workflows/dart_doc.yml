@@ -1,0 +1,60 @@
+name: Generate API Docs
+
+on:
+  push:
+    branches:
+      - main          # main マージ時にドキュメントを再生成・公開する
+  workflow_dispatch:  # 手動実行も可能にする
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行は1つに限定し、古いジョブをキャンセルする
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build API Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter (FVM バージョンを使用)
+        uses: subosito/flutter-action@v2
+        with:
+          # .fvm/fvm_config.json に記載のバージョンを自動で読む
+          flutter-version-file: .fvm/fvm_config.json
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify doc comments (dry-run)
+        # コメント漏れや不正な参照をエラーとして検出する
+        # ドキュメントの生成は行わず、検証のみ実施する
+        run: dart doc --dry-run .
+
+      - name: Generate API Docs
+        run: dart doc .
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/api
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
