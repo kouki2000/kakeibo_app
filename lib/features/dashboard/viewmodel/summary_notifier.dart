@@ -4,8 +4,9 @@
 /// [SummaryNotifier] が [SummaryState] を保持・更新し、
 /// [summaryProvider] 経由で View 層（`HomeTab`）に公開する。
 ///
-/// 第4章ではハードコードのサンプルデータを初期値として使用する。
-/// DB（drift）との接続は第7章で実装し、[SummaryNotifier.build] を書き換える。
+/// 第5章では [SummaryNotifier.addTransaction] を追加し、
+/// フォームからの入力をサマリに反映できるようにする。
+/// DB（drift）との接続は第7章で実装する。
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,12 +56,26 @@ class SummaryNotifier extends Notifier<SummaryState> {
       ),
     ],
   );
+
+  /// フォームから受け取った取引を追加してサマリを更新する。
+  ///
+  /// [item] を `recentTransactions` の先頭に挿入し、
+  /// [isIncome] に応じて [SummaryState.income] または [SummaryState.expense] を加算する。
+  /// Riverpod は `state = 新インスタンス` の代入で変化を検知する。
+  void addTransaction(RecentItem item) {
+    final updated = [item, ...state.recentTransactions];
+    state = SummaryState(
+      income: item.isIncome ? state.income + item.amount : state.income,
+      expense: item.isIncome ? state.expense : state.expense + item.amount,
+      recentTransactions: updated,
+    );
+  }
 }
 
 /// ホームタブ全体で共有するサマリ Provider。
 ///
 /// 参照方法: `ref.watch(summaryProvider)` → [SummaryState] を返す。
-/// 更新方法: `ref.read(summaryProvider.notifier).state = 新インスタンス`
+/// 更新方法: `ref.read(summaryProvider.notifier).addTransaction(item)`
 final summaryProvider = NotifierProvider<SummaryNotifier, SummaryState>(
   SummaryNotifier.new,
 );

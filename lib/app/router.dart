@@ -1,8 +1,8 @@
 import 'package:go_router/go_router.dart';
-import 'package:kakeibo_app/features/dashboard/view/add_transaction_page.dart';
 import 'package:kakeibo_app/features/dashboard/view/dashboard_page.dart';
 import 'package:kakeibo_app/features/dashboard/view/home_tab.dart';
 import 'package:kakeibo_app/features/dashboard/view/list_tab.dart';
+import 'package:kakeibo_app/features/transaction/view/add_transaction_page.dart';
 
 /// アプリ全体のルーター
 final GoRouter appRouter = GoRouter(
