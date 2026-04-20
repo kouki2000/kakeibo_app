@@ -4,91 +4,67 @@
 /// [TransactionListNotifier] が `AsyncNotifier<List<TransactionItem>>` を継承し、
 /// [transactionListProvider] 経由で View 層（`ListTab`）に公開する。
 ///
-/// 第6章では初期データをメモリ上で管理する。
-/// 第7章で drift（SQLite）との接続に切り替える。
+/// 第7章で drift（SQLite）との接続に切り替えた。
+/// `build` / `addItem` / `removeItem` の実装が変わったが、
+/// View 層（`ListTab`）のコードは変更不要。
 library;
 
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kakeibo_app/features/transaction/model/category.dart';
+import 'package:kakeibo_app/core/database/app_database.dart';
 import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
 
 /// 取引リストを非同期で管理する Notifier。
 ///
-/// `AsyncNotifier<T>` を継承することで、状態が [AsyncValue] でラップされる。
+/// `AsyncNotifier<T>` を継承することで、状態が `AsyncValue` でラップされる。
 /// View 層では `.when()` を使ってローディング・エラー・データの3状態を網羅する。
 class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
-  /// 初期データをロードして返す。
+  /// DBから全取引を読み込んで返す。
   ///
   /// Provider が初めて参照されたタイミングで1回だけ呼ばれる。
-  /// `await Future.delayed` で DB アクセスを想定した非同期処理をシミュレートする。
-  /// 第7章では drift のクエリ結果を返すよう書き換える。
+  /// `appDatabaseProvider` 経由で [AppDatabase] を取得し、
+  /// `getAllTransactions()` の結果を [TransactionItem] に変換して返す。
   @override
   Future<List<TransactionItem>> build() async {
-    // DB アクセスのシミュレーション（第7章で drift のクエリに差し替える）
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    return _initialItems;
+    final db = ref.read(appDatabaseProvider);
+    final rows = await db.getAllTransactions();
+    return rows.map(TransactionItem.fromDrift).toList();
   }
 
-  /// 取引を先頭に追加してリストを更新する。
+  /// 取引を先頭に追加してDBとリストを更新する。
   ///
-  /// [item] を現在のリストの先頭に挿入した新しいリストを `state` に代入する。
-  /// `state.requireValue` は状態が `AsyncData` のときだけ使用できる。
+  /// [item] を `transactions` テーブルに挿入し、採番された ID で
+  /// [TransactionItem] を再生成してリストの先頭に追加する。
   Future<void> addItem(TransactionItem item) async {
+    final db = ref.read(appDatabaseProvider);
+
+    final insertedId = await db.insertTransaction(
+      TransactionsCompanion.insert(
+        categoryId: item.category.id,
+        amount: item.amount,
+        // DateTime を Unix エポック秒に変換して保存する
+        date: item.date.millisecondsSinceEpoch,
+        memo: Value(item.memo),
+      ),
+    );
+
+    // DBが採番したIDで TransactionItem を再生成する
+    final saved = item.copyWith(id: insertedId.toString());
     final current = state.requireValue;
-    state = AsyncData([item, ...current]);
+    state = AsyncData([saved, ...current]);
   }
 
-  /// 指定 ID の取引を削除してリストを更新する。
+  /// 指定IDの取引をDBから削除してリストを更新する。
   ///
-  /// [id] に一致する要素を除いた新しいリストを `state` に代入する。
+  /// [id] は `TransactionItem.id`（文字列）で渡される。
+  /// DBの主キーは整数のため `int.parse` で変換する。
   Future<void> removeItem(String id) async {
+    final db = ref.read(appDatabaseProvider);
+    await db.deleteTransaction(int.parse(id));
+
     final current = state.requireValue;
     state = AsyncData(current.where((t) => t.id != id).toList());
   }
-
-  /// 開発用の初期データ。
-  ///
-  /// 第7章で drift への移行後は不要になる。
-  static final List<TransactionItem> _initialItems = [
-    TransactionItem(
-      id: '1',
-      category: Category.findById('salary'),
-      amount: 250000,
-      date: DateTime(2025, 4, 25),
-    ),
-    TransactionItem(
-      id: '2',
-      category: Category.findById('food'),
-      amount: 3200,
-      date: DateTime(2025, 4, 24),
-      memo: 'スーパー',
-    ),
-    TransactionItem(
-      id: '3',
-      category: Category.findById('transport'),
-      amount: 1840,
-      date: DateTime(2025, 4, 23),
-    ),
-    TransactionItem(
-      id: '4',
-      category: Category.findById('entertainment'),
-      amount: 4500,
-      date: DateTime(2025, 4, 22),
-      memo: '映画',
-    ),
-    TransactionItem(
-      id: '5',
-      category: Category.findById('food'),
-      amount: 2100,
-      date: DateTime(2025, 3, 28),
-    ),
-    TransactionItem(
-      id: '6',
-      category: Category.findById('transport'),
-      amount: 990,
-      date: DateTime(2025, 3, 15),
-    ),
-  ];
 }
 
 /// 取引リスト Provider。
