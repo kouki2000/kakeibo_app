@@ -1,6 +1,8 @@
 {
   "dart.flutterSdkPath": ".fvm/versions/stable",
   "cSpell.words": [
-    "kakeibo"
+    "kakeibo",
+    "MVVM",
+    "viewmodel"
   ]
 }

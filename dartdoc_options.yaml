@@ -1,0 +1,22 @@
+dartdoc:
+  # ドキュメントのタイトル
+  name: "家計簿アプリ API ドキュメント"
+
+  # ドキュメントのヘッダに表示する説明文
+  description: |
+    Flutter で作る家計簿アプリ（MoneyForward ME 風）の内部 API ドキュメント。
+    フォルダ構成・各クラス・関数の役割を一覧できる。
+
+  # 出力先（デフォルトは doc/api/）
+  output: "doc/api"
+
+  # プライベートメンバー（_ 付き）はドキュメントに含めない
+  includePrivate: false
+
+  # 警告をエラーとして扱う（CI で lint と同等に機能させる）
+  errors:
+    - unresolved-doc-reference   # [ClassName] など存在しない参照
+    - ambiguous-doc-reference    # 参照が複数候補にマッチする
+
+  # 外部パッケージ（flutter / go_router 等）のドキュメントへリンクする
+  linkToRemote: true
