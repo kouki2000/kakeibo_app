@@ -14,6 +14,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kakeibo_app/features/dashboard/model/summary_state.dart';
 import 'package:kakeibo_app/features/dashboard/viewmodel/summary_notifier.dart';
 import 'package:kakeibo_app/features/transaction/model/category.dart';
+import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
+import 'package:kakeibo_app/features/transaction/viewmodel/transaction_list_notifier.dart';
 
 /// 取引入力ページ。
 ///
@@ -72,7 +74,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   }
 
   /// フォームのバリデーションを実行して取引を保存する。
-  void _save() {
+  Future<void> _save() async {
     // validate() が false を返した場合は各フィールドのエラーメッセージが表示される
     if (!_formKey.currentState!.validate()) return;
 
@@ -89,7 +91,18 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     );
 
     ref.read(summaryProvider.notifier).addTransaction(item);
-    context.pop();
+
+    // 明細タブのリストにも追加する（第6章で追加）
+    final transactionItem = TransactionItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      category: _selectedCategory,
+      amount: amount,
+      date: _selectedDate,
+      memo: _memoController.text.isEmpty ? null : _memoController.text,
+    );
+    await ref.read(transactionListProvider.notifier).addItem(transactionItem);
+
+    if (mounted) context.pop();
   }
 
   @override
