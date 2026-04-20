@@ -6,6 +6,7 @@
 /// 第7章では drift の `TransactionData` からこのクラスへの変換処理を追加する。
 library;
 
+import 'package:kakeibo_app/core/database/app_database.dart';
 import 'package:kakeibo_app/features/transaction/model/category.dart';
 
 /// 明細タブに表示する取引1件のデータクラス。
@@ -21,6 +22,20 @@ class TransactionItem {
     required this.date,
     this.memo,
   });
+
+  /// drift の [Transaction] から [TransactionItem] を生成するファクトリ。
+  ///
+  /// [row] は `AppDatabase.getAllTransactions()` が返す行データ。
+  /// `date` は Unix エポック秒で保存されているため [DateTime.fromMillisecondsSinceEpoch] で変換する。
+  factory TransactionItem.fromDrift(Transaction row) {
+    return TransactionItem(
+      id: row.id.toString(),
+      category: Category.findById(row.categoryId),
+      amount: row.amount,
+      date: DateTime.fromMillisecondsSinceEpoch(row.date),
+      memo: row.memo,
+    );
+  }
 
   /// 取引を一意に識別する ID。削除操作で使用する。
   final String id;
