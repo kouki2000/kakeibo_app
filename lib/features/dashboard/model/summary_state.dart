@@ -5,6 +5,8 @@
 /// `HomeTab` が `summaryProvider` 経由で参照する。
 library;
 
+import 'package:kakeibo_app/features/transaction/model/transaction.dart';
+
 /// 収支サマリの表示状態を保持するイミュータブルなデータクラス。
 ///
 /// フィールドはすべて `final` で、状態変更時は新インスタンスを生成する。

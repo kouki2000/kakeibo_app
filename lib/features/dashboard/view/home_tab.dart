@@ -7,7 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kakeibo_app/features/dashboard/model/summary_state.dart' show SummaryState;
+import 'package:kakeibo_app/features/dashboard/model/summary_state.dart';
 import 'package:kakeibo_app/features/dashboard/view/recent_list.dart';
 import 'package:kakeibo_app/features/dashboard/view/summary_card.dart';
 import 'package:kakeibo_app/features/dashboard/viewmodel/summary_notifier.dart';

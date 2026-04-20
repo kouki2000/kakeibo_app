@@ -2,7 +2,7 @@
 ///
 /// MVVM の ViewModel 層に位置する。
 /// [SummaryNotifier] が [SummaryState] を保持・更新し、
-/// [summaryProvider] 経由で View 層（[HomeTab]）に公開する。
+/// [summaryProvider] 経由で View 層（`HomeTab`）に公開する。
 ///
 /// 第4章ではハードコードのサンプルデータを初期値として使用する。
 /// DB（drift）との接続は第7章で実装し、[SummaryNotifier.build] を書き換える。
@@ -10,7 +10,6 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakeibo_app/features/dashboard/model/summary_state.dart';
-import 'package:kakeibo_app/features/dashboard/view/home_tab.dart' show HomeTab;
 
 /// 収支サマリの状態を管理する Notifier。
 ///

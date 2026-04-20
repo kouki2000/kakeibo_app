@@ -1,13 +1,12 @@
 /// 直近の取引リストウィジェット。
 ///
 /// MVVM の View 層に位置する。
-/// 状態は持たず、[HomeTab]（ConsumerWidget）から [RecentItem] のリストを受け取って描画する。
+/// 状態は持たず、`HomeTab`（ConsumerWidget）から [RecentItem] のリストを受け取って描画する。
 library;
 
 import 'package:flutter/material.dart';
 import 'package:kakeibo_app/core/utils/formatter.dart';
 import 'package:kakeibo_app/features/dashboard/model/summary_state.dart';
-import 'package:kakeibo_app/features/dashboard/view/home_tab.dart' show HomeTab;
 
 /// 直近の取引を [ListTile] で一覧表示するウィジェット。
 ///

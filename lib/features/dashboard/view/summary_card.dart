@@ -1,12 +1,11 @@
 /// 収支サマリカードウィジェット。
 ///
 /// MVVM の View 層に位置する。
-/// 状態は持たず、[HomeTab]（ConsumerWidget）から値を受け取って描画する。
+/// 状態は持たず、`HomeTab`（ConsumerWidget）から値を受け取って描画する。
 library;
 
 import 'package:flutter/material.dart';
 import 'package:kakeibo_app/core/utils/formatter.dart';
-import 'package:kakeibo_app/features/dashboard/view/home_tab.dart' show HomeTab;
 
 /// 今月の収支・収入・支出を表示する [Card] ウィジェット。
 ///

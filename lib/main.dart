@@ -20,7 +20,7 @@ void main() {
 /// [MaterialApp.router] に [appRouter] を渡すことで
 /// go_router によるルーティングを有効化する。
 class KakeiboApp extends StatelessWidget {
-  /// コンストラクタ
+  /// コンストラクタ。
   const KakeiboApp({super.key});
 
   @override
