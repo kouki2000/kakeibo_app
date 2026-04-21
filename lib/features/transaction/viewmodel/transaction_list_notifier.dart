@@ -5,13 +5,16 @@
 /// [transactionListProvider] 経由で View 層（`ListTab`）に公開する。
 ///
 /// 第7章で drift（SQLite）との接続に切り替えた。
-/// `build` / `addItem` / `removeItem` の実装が変わったが、
-/// View 層（`ListTab`）のコードは変更不要。
+/// 第8章で Firestore への書き込みを追加した。
+/// `build` は変更なし（起動時は SQLite から読み込む）。
+/// `addItem` / `removeItem` でローカルSQLite と Firestore の両方を更新する。
 library;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakeibo_app/core/database/app_database.dart';
+import 'package:kakeibo_app/core/firebase/firestore_service.dart';
 import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
 
 /// 取引リストを非同期で管理する Notifier。
@@ -22,8 +25,9 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   /// DBから全取引を読み込んで返す。
   ///
   /// Provider が初めて参照されたタイミングで1回だけ呼ばれる。
-  /// `appDatabaseProvider` 経由で [AppDatabase] を取得し、
+  /// `appDatabaseProvider` 経由で `AppDatabase` を取得し、
   /// `getAllTransactions()` の結果を [TransactionItem] に変換して返す。
+  /// 起動時は常に SQLite から読み込む（Firestore への問い合わせは行わない）。
   @override
   Future<List<TransactionItem>> build() async {
     final db = ref.read(appDatabaseProvider);
@@ -31,39 +35,57 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
     return rows.map(TransactionItem.fromDrift).toList();
   }
 
-  /// 取引を先頭に追加してDBとリストを更新する。
+  /// 取引を先頭に追加してSQLite・Firestore・リストを更新する。
   ///
-  /// [item] を `transactions` テーブルに挿入し、採番された ID で
-  /// [TransactionItem] を再生成してリストの先頭に追加する。
+  /// 処理順序は次の通り。
+  /// 1. SQLite に挿入して採番IDを取得する。
+  /// 2. 採番IDで [TransactionItem] を再生成して状態を更新する。
+  /// 3. Firestore に書き込む（オフライン時はキューに積まれ、復帰後に自動送信される）。
   Future<void> addItem(TransactionItem item) async {
     final db = ref.read(appDatabaseProvider);
+    final firestore = ref.read(firestoreServiceProvider);
 
+    // 1. SQLite に挿入して採番IDを取得する
     final insertedId = await db.insertTransaction(
       TransactionsCompanion.insert(
         categoryId: item.category.id,
         amount: item.amount,
-        // DateTime を Unix エポック秒に変換して保存する
         date: item.date.millisecondsSinceEpoch,
         memo: Value(item.memo),
       ),
     );
 
-    // DBが採番したIDで TransactionItem を再生成する
+    // 2. DBが採番したIDで TransactionItem を再生成して状態を更新する
     final saved = item.copyWith(id: insertedId.toString());
     final current = state.requireValue;
     state = AsyncData([saved, ...current]);
+
+    // 3. Firestore に書き込む（await しないことで UI をブロックしない）
+    // オフライン時は Firestore SDK が内部キューに積み、復帰後に自動送信する
+    firestore.saveTransaction(saved).catchError((Object e) {
+      debugPrint('[FirestoreService] saveTransaction failed: $e');
+    });
   }
 
-  /// 指定IDの取引をDBから削除してリストを更新する。
+  /// 指定IDの取引をSQLite・Firestore・リストから削除する。
   ///
-  /// [id] は `TransactionItem.id`（文字列）で渡される。
-  /// DBの主キーは整数のため `int.parse` で変換する。
+  /// [id] は `TransactionItem.id`（SQLite の採番ID の文字列）。
+  /// SQLite の削除を先に行い、UIを即座に更新してから Firestore を削除する。
   Future<void> removeItem(String id) async {
     final db = ref.read(appDatabaseProvider);
+    final firestore = ref.read(firestoreServiceProvider);
+
+    // SQLite から削除する
     await db.deleteTransaction(int.parse(id));
 
+    // リストから除外して状態を更新する
     final current = state.requireValue;
     state = AsyncData(current.where((t) => t.id != id).toList());
+
+    // Firestore から削除する（await しないことで UI をブロックしない）
+    firestore.deleteTransaction(id).catchError((Object e) {
+      debugPrint('[FirestoreService] deleteTransaction failed: $e');
+    });
   }
 }
 
