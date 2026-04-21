@@ -11,8 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kakeibo_app/features/dashboard/model/summary_state.dart';
-import 'package:kakeibo_app/features/dashboard/viewmodel/summary_notifier.dart';
 import 'package:kakeibo_app/features/transaction/model/category.dart';
 import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
 import 'package:kakeibo_app/features/transaction/viewmodel/transaction_list_notifier.dart';
@@ -75,26 +73,14 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
 
   /// フォームのバリデーションを実行して取引を保存する。
   Future<void> _save() async {
-    // validate() が false を返した場合は各フィールドのエラーメッセージが表示される
     if (!_formKey.currentState!.validate()) return;
 
     final amount = int.parse(_amountController.text);
-    final mm = _selectedDate.month.toString().padLeft(2, '0');
-    final dd = _selectedDate.day.toString().padLeft(2, '0');
 
-    final item = RecentItem(
-      label: _selectedCategory.name,
-      amount: amount,
-      iconCode: _selectedCategory.iconCode,
-      isIncome: _isIncome,
-      dateLabel: '$mm/$dd',
-    );
-
-    ref.read(summaryProvider.notifier).addTransaction(item);
-
-    // 明細タブのリストにも追加する（第6章で追加）
+    // 明細タブのリストに追加する（summaryProvider は transactionListProvider を
+    // watch しているため、ここへの書き込みだけでホームタブも自動更新される）
     final transactionItem = TransactionItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '',
       category: _selectedCategory,
       amount: amount,
       date: _selectedDate,
