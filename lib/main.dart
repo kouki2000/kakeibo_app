@@ -1,23 +1,27 @@
 /// アプリのエントリポイント。
 ///
 /// [ProviderScope] でウィジェットツリー全体を包み、Riverpod を有効化する。
-/// ルーティングは [appRouter]（lib/app/router.dart）で一元管理する。
+/// 第8章で Firebase の初期化を追加した。
+/// [Firebase.initializeApp] は非同期のため `async` で待機する。
+/// ルーティングは `appRouter`（lib/app/router.dart）で一元管理する。
 library;
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakeibo_app/app/router.dart';
+import 'package:kakeibo_app/firebase_options.dart';
 
-void main() {
-  runApp(
-    // Riverpod を有効化するためアプリ全体を ProviderScope で包む
-    const ProviderScope(child: KakeiboApp()),
-  );
+Future<void> main() async {
+  // Flutter エンジンの初期化を待機してから Firebase を初期化する
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const ProviderScope(child: KakeiboApp()));
 }
 
 /// アプリのルートウィジェット。
 ///
-/// [MaterialApp.router] に [appRouter] を渡すことで
+/// [MaterialApp.router] に `appRouter` を渡すことで
 /// go_router によるルーティングを有効化する。
 class KakeiboApp extends StatelessWidget {
   /// コンストラクタ。
