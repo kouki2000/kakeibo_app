@@ -46,3 +46,8 @@ jobs:
       #    --set-exit-if-changed : フォーマットが崩れているファイルがあれば終了コード1を返す
       - name: dart format check
         run: dart format lib/ --output=none --set-exit-if-changed
+
+      # 6. ウィジェットテスト・ユニットテストを実行する
+      #    1件でも失敗したらCIを失敗させる
+      - name: flutter test
+        run: flutter test --reporter expanded
