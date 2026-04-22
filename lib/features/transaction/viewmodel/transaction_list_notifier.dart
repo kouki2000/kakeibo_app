@@ -1,14 +1,16 @@
 /// 明細タブの取引リスト状態管理。
 ///
 /// MVVM の ViewModel 層に位置する。
-/// [TransactionListNotifier] が `AsyncNotifier<List<TransactionItem>>` を継承し、
-/// [transactionListProvider] 経由で View 層（`ListTab`）に公開する。
+/// TransactionListNotifier が AsyncNotifier を継承し、
+/// transactionListProvider 経由で View 層（ListTab）に公開する。
 ///
 /// 第7章で drift（SQLite）との接続に切り替えた。
 /// 第8章で Firestore への書き込みを追加した。
 /// 第10章で `app_database.dart` の import に `as db` エイリアスを追加し、
-/// `Category` の名前衝突を解消した。
+/// Category の名前衝突を解消した。
 library;
+
+import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -25,8 +27,8 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   /// DBから全取引を読み込んで返す。
   ///
   /// Provider が初めて参照されたタイミングで1回だけ呼ばれる。
-  /// `appDatabaseProvider` 経由で `AppDatabase` を取得し、
-  /// `getAllTransactions()` の結果を [TransactionItem] に変換して返す。
+  /// appDatabaseProvider 経由で AppDatabase を取得し、
+  /// getAllTransactions() の結果を TransactionItem に変換して返す。
   /// 起動時は常に SQLite から読み込む（Firestore への問い合わせは行わない）。
   @override
   Future<List<TransactionItem>> build() async {
@@ -39,7 +41,7 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   ///
   /// 処理順序は次の通り。
   /// 1. SQLite に挿入して採番IDを取得する。
-  /// 2. 採番IDで [TransactionItem] を再生成して状態を更新する。
+  /// 2. 採番IDで TransactionItem を再生成して状態を更新する。
   /// 3. Firestore に書き込む（オフライン時はキューに積まれ、復帰後に自動送信される）。
   Future<void> addItem(TransactionItem item) async {
     final database = ref.read(db.appDatabaseProvider);
@@ -60,16 +62,18 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
     final current = state.requireValue;
     state = AsyncData([saved, ...current]);
 
-    // 3. Firestore に書き込む（await しないことで UI をブロックしない）
+    // 3. Firestore に書き込む（unawaited で UI をブロックしない）
     // オフライン時は Firestore SDK が内部キューに積み、復帰後に自動送信する
-    firestore.saveTransaction(saved).catchError((Object e) {
-      debugPrint('[FirestoreService] saveTransaction failed: $e');
-    });
+    unawaited(
+      firestore.saveTransaction(saved).catchError((Object e) {
+        debugPrint('[FirestoreService] saveTransaction failed: $e');
+      }),
+    );
   }
 
   /// 指定IDの取引をSQLite・Firestore・リストから削除する。
   ///
-  /// [id] は `TransactionItem.id`（SQLite の採番ID の文字列）。
+  /// id は TransactionItem.id（SQLite の採番ID の文字列）。
   /// SQLite の削除を先に行い、UIを即座に更新してから Firestore を削除する。
   Future<void> removeItem(String id) async {
     final database = ref.read(db.appDatabaseProvider);
@@ -82,16 +86,18 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
     final current = state.requireValue;
     state = AsyncData(current.where((t) => t.id != id).toList());
 
-    // Firestore から削除する（await しないことで UI をブロックしない）
-    firestore.deleteTransaction(id).catchError((Object e) {
-      debugPrint('[FirestoreService] deleteTransaction failed: $e');
-    });
+    // Firestore から削除する（unawaited で UI をブロックしない）
+    unawaited(
+      firestore.deleteTransaction(id).catchError((Object e) {
+        debugPrint('[FirestoreService] deleteTransaction failed: $e');
+      }),
+    );
   }
 }
 
 /// 取引リスト Provider。
 ///
-/// 参照方法: `ref.watch(transactionListProvider)` → `AsyncValue<List<TransactionItem>>` を返す。
+/// 参照方法: `ref.watch(transactionListProvider)` → AsyncValue<List<TransactionItem>> を返す。
 /// 追加: `ref.read(transactionListProvider.notifier).addItem(item)`
 /// 削除: `ref.read(transactionListProvider.notifier).removeItem(id)`
 final transactionListProvider =
@@ -102,21 +108,21 @@ final transactionListProvider =
 /// 明細タブで選択中の年月を管理する Notifier。
 ///
 /// 状態は現在の年月で初期化する。
-/// [set] を呼ぶと状態が更新され、[selectedMonthProvider] を watch している
-/// ウィジェットが自動で再ビルドされる。
+/// update を呼ぶと状態が更新され、
+/// selectedMonthProvider を watch しているウィジェットが自動で再ビルドされる。
 class SelectedMonthNotifier extends Notifier<DateTime> {
   /// 初期値として現在の年月を返す。
   @override
   DateTime build() => DateTime(DateTime.now().year, DateTime.now().month);
 
-  /// 選択中の年月を [month] に更新する。
-  void set(DateTime month) => state = month;
+  /// 選択中の年月を更新する。
+  void update(DateTime month) => state = month;
 }
 
 /// 明細タブで選択中の年月を管理する Provider。
 ///
-/// 参照方法: `ref.watch(selectedMonthProvider)` → [DateTime] を返す。
-/// 更新方法: `ref.read(selectedMonthProvider.notifier).set(新しいDateTime)`
+/// 参照方法: `ref.watch(selectedMonthProvider)` → DateTime を返す。
+/// 更新方法: `ref.read(selectedMonthProvider.notifier).update(新しいDateTime)`
 final selectedMonthProvider = NotifierProvider<SelectedMonthNotifier, DateTime>(
   SelectedMonthNotifier.new,
 );

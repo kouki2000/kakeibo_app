@@ -1,17 +1,17 @@
-# PR時に静的解析とフォーマットチェックを実行するワークフロー。
+# PR時に静的解析・フォーマットチェック・テストを実行するワークフロー。
 #
-# トリガー：feature/* ブランチから main へのプルリクエスト（作成・更新）
-# 実行内容：dart analyze / dart format --output=none --set-exit-if-changed
-# 失敗条件：解析エラーが1件でもある、またはフォーマットが崩れているファイルがある
+# トリガー：main へのプルリクエスト（作成・更新）
+# 実行内容：build_runner / dart analyze / dart format / flutter test
+# 失敗条件：error・warning レベルの解析問題・フォーマット崩れ・テスト失敗のいずれかがある場合
 name: CI
 
 on:
   pull_request:
     branches:
-      - main        # main へのPRだけを対象にする
+      - main
     paths:
-      - 'lib/**'    # lib/ 配下のファイルが変更されたときだけ実行する
-      - 'test/**'   # test/ 配下が変更されたときも実行する
+      - 'lib/**'
+      - 'test/**'
       - 'pubspec.yaml'
 
 jobs:
@@ -20,29 +20,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. リポジトリをチェックアウトする
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Flutter をセットアップする
-      #    .fvm/fvm_config.json に記載のバージョンを自動で読む
       - name: Setup Flutter (FVM)
         uses: subosito/flutter-action@v2
         with:
           flutter-version-file: .fvm/fvm_config.json
           cache: true
 
-      # 3. 依存パッケージをインストールする
       - name: Install dependencies
         run: flutter pub get
 
-      # 4. 静的解析を実行する
-      #    警告（warning）・エラー（error）が1件でもあればCIを失敗させる
-      - name: dart analyze
-        run: dart analyze lib/ --fatal-warnings
+      # *.g.dart は .gitignore で管理対象外のため CI 上で生成する
+      # app_database.g.dart と list_tab_test.mocks.dart が対象
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
 
-      # 5. フォーマットチェックを実行する
-      #    --output=none  : ファイルを書き換えず、対象ファイル名だけ標準出力する
-      #    --set-exit-if-changed : フォーマットが崩れているファイルがあれば終了コード1を返す
+      # --fatal-warnings は外す
+      # ローカルと CI で info の内容が異なるケースがあるため
+      # error・warning のみを失敗条件にする
+      - name: dart analyze
+        run: dart analyze lib/
+
       - name: dart format check
         run: dart format lib/ --output=none --set-exit-if-changed
+
+      - name: flutter test
+        run: flutter test --reporter expanded

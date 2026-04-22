@@ -91,9 +91,10 @@ class _MonthNavigator extends ConsumerWidget {
           tooltip: '前の月',
           onPressed: () {
             // DateTime のコンストラクタは月に 0 や 13 を渡しても自動で繰り上がる
+            // 変更後
             ref
                 .read(selectedMonthProvider.notifier)
-                .set(DateTime(selectedMonth.year, selectedMonth.month - 1));
+                .update(DateTime(selectedMonth.year, selectedMonth.month - 1));
           },
         ),
         Text(
@@ -106,7 +107,7 @@ class _MonthNavigator extends ConsumerWidget {
           onPressed: () {
             ref
                 .read(selectedMonthProvider.notifier)
-                .set(DateTime(selectedMonth.year, selectedMonth.month + 1));
+                .update(DateTime(selectedMonth.year, selectedMonth.month + 1));
           },
         ),
       ],
