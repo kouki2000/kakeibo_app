@@ -1,3 +1,11 @@
+/// 取引カテゴリのモデル。
+///
+/// MVVM の Model 層に位置する。
+/// 第10章で `fromDb` ファクトリを追加し、drift 生成の `Category` から変換できるようにした。
+library;
+
+import 'package:kakeibo_app/core/database/app_database.dart' as db;
+
 class Category {
   const Category({
     required this.id,
@@ -18,7 +26,9 @@ class Category {
   /// true: 収入カテゴリ / false: 支出カテゴリ
   final bool isIncome;
 
-  /// アプリで使用するデフォルトカテゴリ一覧
+  /// アプリで使用するデフォルトカテゴリ一覧。
+  ///
+  /// DBが初期化される前のフォールバックや、テストでの使用を想定して残す。
   static const List<Category> defaults = [
     Category(id: 'food', name: '食費', iconCode: 'e56c'),
     Category(id: 'transport', name: '交通費', iconCode: 'e530'),
@@ -29,4 +39,17 @@ class Category {
 
   static Category findById(String id) =>
       defaults.firstWhere((c) => c.id == id, orElse: () => defaults.first);
+
+  /// drift の [db.Category] から [Category] を生成するファクトリ。
+  ///
+  /// `app_database.dart` を `as db` でエイリアスすることで
+  /// 同名の drift 生成クラスとアプリモデルを区別する。
+  factory Category.fromDb(db.Category row) {
+    return Category(
+      id: row.id,
+      name: row.name,
+      iconCode: row.iconCode,
+      isIncome: row.isIncome,
+    );
+  }
 }
