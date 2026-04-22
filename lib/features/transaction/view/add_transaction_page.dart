@@ -3,8 +3,6 @@
 /// MVVM の View 層に位置する。
 /// [StatefulWidget] で実装し、[TextEditingController] / [FocusNode] /
 /// [GlobalKey] でフォームの入力状態を管理する。
-/// 保存時に `summaryProvider.notifier` の `addTransaction` を呼び出して
-/// ホームタブのサマリを更新する。
 library;
 
 import 'package:flutter/material.dart';
@@ -44,6 +42,8 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   bool _isIncome = false;
 
   /// 選択中のカテゴリ。
+  /// カテゴリ選択肢は [Category.defaults] から取得する。
+  /// DBからの取得は2周目でカテゴリ管理画面を実装するタイミングで対応する。
   Category _selectedCategory = Category.defaults.first;
 
   /// 選択中の日付。
@@ -93,7 +93,8 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 選択中のカテゴリをセグメントの状態に合わせてフィルタリング
+    // カテゴリ選択肢を収支種別でフィルタリングする。
+    // DBからの取得は2周目で対応するため、現時点は Category.defaults を使う。
     final categories = Category.defaults
         .where((c) => c.isIncome == _isIncome)
         .toList();
@@ -179,8 +180,6 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 hintText: '日付を選択',
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.calendar_today_outlined),
-                // controller を使わず直接 controller に値を表示させる代わりに
-                // labelText で選択済み日付を表示する
               ),
               controller: TextEditingController(
                 text:

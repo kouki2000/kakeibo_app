@@ -3,10 +3,10 @@
 /// MVVM の Model 層に位置する。
 /// `TransactionListNotifier` が [TransactionItem] のリストを状態として保持し、
 /// `ListTab` が `transactionListProvider` 経由で参照する。
-/// 第7章では drift の `TransactionData` からこのクラスへの変換処理を追加する。
+/// 第10章で [fromDrift] の引数を JOIN 結果対応に変更した。
 library;
 
-import 'package:kakeibo_app/core/database/app_database.dart';
+import 'package:kakeibo_app/core/database/app_database.dart' as db;
 import 'package:kakeibo_app/features/transaction/model/category.dart';
 
 /// 明細タブに表示する取引1件のデータクラス。
@@ -23,17 +23,18 @@ class TransactionItem {
     this.memo,
   });
 
-  /// drift の [Transaction] から [TransactionItem] を生成するファクトリ。
+  /// drift の JOIN 結果 [db.TransactionWithCategory] から [TransactionItem] を生成するファクトリ。
   ///
-  /// [row] は `AppDatabase.getAllTransactions()` が返す行データ。
-  /// `date` は Unix エポック秒で保存されているため [DateTime.fromMillisecondsSinceEpoch] で変換する。
-  factory TransactionItem.fromDrift(Transaction row) {
+  /// 第10章で引数を `Transaction`（単体行）から [db.TransactionWithCategory]（JOIN結果）に変更した。
+  /// カテゴリ情報を JOIN 結果から直接取得するため、`Category.findById` のコード内検索が不要になる。
+  /// `app_database.dart` を `as db` でエイリアスすることで同名の drift 生成 `Category` と区別する。
+  factory TransactionItem.fromDrift(db.TransactionWithCategory row) {
     return TransactionItem(
-      id: row.id.toString(),
-      category: Category.findById(row.categoryId),
-      amount: row.amount,
-      date: DateTime.fromMillisecondsSinceEpoch(row.date),
-      memo: row.memo,
+      id: row.transaction.id.toString(),
+      category: Category.fromDb(row.category),
+      amount: row.transaction.amount,
+      date: DateTime.fromMillisecondsSinceEpoch(row.transaction.date),
+      memo: row.transaction.memo,
     );
   }
 

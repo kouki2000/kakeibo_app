@@ -6,14 +6,14 @@
 ///
 /// 第7章で drift（SQLite）との接続に切り替えた。
 /// 第8章で Firestore への書き込みを追加した。
-/// `build` は変更なし（起動時は SQLite から読み込む）。
-/// `addItem` / `removeItem` でローカルSQLite と Firestore の両方を更新する。
+/// 第10章で `app_database.dart` の import に `as db` エイリアスを追加し、
+/// `Category` の名前衝突を解消した。
 library;
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kakeibo_app/core/database/app_database.dart';
+import 'package:kakeibo_app/core/database/app_database.dart' as db;
 import 'package:kakeibo_app/core/firebase/firestore_service.dart';
 import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
 
@@ -30,8 +30,8 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   /// 起動時は常に SQLite から読み込む（Firestore への問い合わせは行わない）。
   @override
   Future<List<TransactionItem>> build() async {
-    final db = ref.read(appDatabaseProvider);
-    final rows = await db.getAllTransactions();
+    final database = ref.read(db.appDatabaseProvider);
+    final rows = await database.getAllTransactions();
     return rows.map(TransactionItem.fromDrift).toList();
   }
 
@@ -42,12 +42,12 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   /// 2. 採番IDで [TransactionItem] を再生成して状態を更新する。
   /// 3. Firestore に書き込む（オフライン時はキューに積まれ、復帰後に自動送信される）。
   Future<void> addItem(TransactionItem item) async {
-    final db = ref.read(appDatabaseProvider);
+    final database = ref.read(db.appDatabaseProvider);
     final firestore = ref.read(firestoreServiceProvider);
 
     // 1. SQLite に挿入して採番IDを取得する
-    final insertedId = await db.insertTransaction(
-      TransactionsCompanion.insert(
+    final insertedId = await database.insertTransaction(
+      db.TransactionsCompanion.insert(
         categoryId: item.category.id,
         amount: item.amount,
         date: item.date.millisecondsSinceEpoch,
@@ -72,11 +72,11 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   /// [id] は `TransactionItem.id`（SQLite の採番ID の文字列）。
   /// SQLite の削除を先に行い、UIを即座に更新してから Firestore を削除する。
   Future<void> removeItem(String id) async {
-    final db = ref.read(appDatabaseProvider);
+    final database = ref.read(db.appDatabaseProvider);
     final firestore = ref.read(firestoreServiceProvider);
 
     // SQLite から削除する
-    await db.deleteTransaction(int.parse(id));
+    await database.deleteTransaction(int.parse(id));
 
     // リストから除外して状態を更新する
     final current = state.requireValue;
