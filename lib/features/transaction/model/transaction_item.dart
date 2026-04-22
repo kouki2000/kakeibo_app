@@ -1,9 +1,9 @@
 /// 明細タブの1行に対応する表示専用モデル。
 ///
 /// MVVM の Model 層に位置する。
-/// `TransactionListNotifier` が [TransactionItem] のリストを状態として保持し、
-/// `ListTab` が `transactionListProvider` 経由で参照する。
-/// 第10章で [fromDrift] の引数を JOIN 結果対応に変更した。
+/// TransactionListNotifier が TransactionItem のリストを状態として保持し、
+/// ListTab が transactionListProvider 経由で参照する。
+/// 第10章で fromDrift の引数を JOIN 結果対応に変更した。
 library;
 
 import 'package:kakeibo_app/core/database/app_database.dart' as db;
@@ -23,11 +23,12 @@ class TransactionItem {
     this.memo,
   });
 
-  /// drift の JOIN 結果 [db.TransactionWithCategory] から [TransactionItem] を生成するファクトリ。
+  /// drift の JOIN 結果から TransactionItem を生成するファクトリ。
   ///
-  /// 第10章で引数を `Transaction`（単体行）から [db.TransactionWithCategory]（JOIN結果）に変更した。
-  /// カテゴリ情報を JOIN 結果から直接取得するため、`Category.findById` のコード内検索が不要になる。
-  /// `app_database.dart` を `as db` でエイリアスすることで同名の drift 生成 `Category` と区別する。
+  /// 第10章で引数を Transaction（単体行）から TransactionWithCategory（JOIN結果）に変更した。
+  /// カテゴリ情報を JOIN 結果から直接取得するため、Category.findById のコード内検索が不要になる。
+  /// `app_database.dart` を `as db` でエイリアスすることで
+  /// 同名の drift 生成 Category と区別する。
   factory TransactionItem.fromDrift(db.TransactionWithCategory row) {
     return TransactionItem(
       id: row.transaction.id.toString(),

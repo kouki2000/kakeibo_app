@@ -37,7 +37,7 @@ void main() {
 
   group('Formatter.yearMonth', () {
     test('年月を「YYYY年M月」形式で返す', () {
-      expect(Formatter.yearMonth(DateTime(2025, 4, 1)), '2025年4月');
+      expect(Formatter.yearMonth(DateTime(2025, 4, 15)), '2025年4月');
     });
   });
 }

@@ -1,12 +1,12 @@
-/// [ListTab] ウィジェットのテスト。
+/// ListTab ウィジェットのテスト。
 ///
-/// [AppDatabase] と [FirestoreService] を mockito の [GenerateMocks] でモック化し、
-/// [appDatabaseProvider] と [firestoreServiceProvider] を
-/// [ProviderScope.overrides] で差し替える。
-/// [TransactionListNotifier] は本物を使うため、Notifier の動作ごとテストできる。
+/// AppDatabase と FirestoreService を mockito の GenerateMocks でモック化し、
+/// appDatabaseProvider と firestoreServiceProvider を
+/// ProviderScope.overrides で差し替える。
+/// TransactionListNotifier は本物を使うため、Notifier の動作ごとテストできる。
 ///
 /// drift のストリームタイマー問題を回避するため、インメモリ DB は
-/// [DatabaseConnection] に `closeStreamsSynchronously: true` を渡して作成する。
+/// DatabaseConnection に `closeStreamsSynchronously: true` を渡して作成する。
 library;
 
 import 'package:drift/drift.dart';
