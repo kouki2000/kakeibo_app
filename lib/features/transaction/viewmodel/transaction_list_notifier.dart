@@ -108,7 +108,7 @@ final transactionListProvider =
 /// 明細タブで選択中の年月を管理する Notifier。
 ///
 /// 状態は現在の年月で初期化する。
-/// selectedMonth setter を呼ぶと状態が更新され、
+/// update を呼ぶと状態が更新され、
 /// selectedMonthProvider を watch しているウィジェットが自動で再ビルドされる。
 class SelectedMonthNotifier extends Notifier<DateTime> {
   /// 初期値として現在の年月を返す。
@@ -116,13 +116,13 @@ class SelectedMonthNotifier extends Notifier<DateTime> {
   DateTime build() => DateTime(DateTime.now().year, DateTime.now().month);
 
   /// 選択中の年月を更新する。
-  set selectedMonth(DateTime month) => state = month;
+  void update(DateTime month) => state = month;
 }
 
 /// 明細タブで選択中の年月を管理する Provider。
 ///
 /// 参照方法: `ref.watch(selectedMonthProvider)` → DateTime を返す。
-/// 更新方法: `ref.read(selectedMonthProvider.notifier).selectedMonth = 新しいDateTime`
+/// 更新方法: `ref.read(selectedMonthProvider.notifier).update(新しいDateTime)`
 final selectedMonthProvider = NotifierProvider<SelectedMonthNotifier, DateTime>(
   SelectedMonthNotifier.new,
 );
