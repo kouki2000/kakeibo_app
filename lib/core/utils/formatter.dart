@@ -38,9 +38,4 @@ class Formatter {
   ///
   /// サマリ画面のヘッダ表示などに使用する。
   static String yearMonth(DateTime dt) => '${dt.year}年${dt.month}月';
-
-  // CIテスト用：このコードはCIの動作確認後に削除する
-  void _ciTest() {
-    final unused = 'このコードは意図的なエラー';
-  }
 }
