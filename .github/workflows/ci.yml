@@ -1,6 +1,6 @@
 # PR時に静的解析とフォーマットチェックを実行するワークフロー。
 #
-# トリガー：feature/* ブランチから develop へのプルリクエスト（作成・更新）
+# トリガー：feature/* ブランチから main へのプルリクエスト（作成・更新）
 # 実行内容：dart analyze / dart format --output=none --set-exit-if-changed
 # 失敗条件：解析エラーが1件でもある、またはフォーマットが崩れているファイルがある
 name: CI
@@ -8,7 +8,7 @@ name: CI
 on:
   pull_request:
     branches:
-      - develop     # develop へのPRだけを対象にする
+      - main        # main へのPRだけを対象にする
     paths:
       - 'lib/**'    # lib/ 配下のファイルが変更されたときだけ実行する
       - 'test/**'   # test/ 配下が変更されたときも実行する
