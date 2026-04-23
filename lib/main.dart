@@ -13,7 +13,6 @@ import 'package:kakeibo_app/app/router.dart';
 import 'package:kakeibo_app/firebase_options.dart';
 
 Future<void> main() async {
-  // Flutter エンジンの初期化を待機してから Firebase を初期化する
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: KakeiboApp()));
