@@ -24,11 +24,13 @@ class DashboardPage extends StatelessWidget {
         },
         destinations: const [
           NavigationDestination(
+            key: Key('nav_home'),
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'ホーム',
           ),
           NavigationDestination(
+            key: Key('nav_list'),
             icon: Icon(Icons.list_outlined),
             selectedIcon: Icon(Icons.list),
             label: '明細',
