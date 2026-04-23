@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakeibo_app/app/router.dart';
 import 'package:kakeibo_app/firebase_options.dart';
+import 'package:firebase_analytics/firebase_analytics.dart'; // ← 追加
+import 'package:kakeibo_app/core/analytics/analytics_service.dart'; // ← 追加
 
 Future<void> main() async {
   // Flutter エンジンの初期化を待機してから Firebase を初期化する
@@ -29,6 +31,10 @@ class KakeiboApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // AnalyticsService から FirebaseAnalytics インスタンスを取得する。
+    // ProviderScope の外では ref が使えないため、直接インスタンスを生成する。
+    final analyticsService = AnalyticsService();
+
     return MaterialApp.router(
       title: '家計簿アプリ',
       debugShowCheckedModeBanner: false,
@@ -37,6 +43,10 @@ class KakeiboApp extends StatelessWidget {
         useMaterial3: true,
       ),
       routerConfig: appRouter,
+      // ナビゲーションオブザーバーを渡すことで画面遷移を自動記録する。
+      // go_router では routerConfig 側に observers を渡す方法がないため、
+      // MaterialApp.router の navigatorObservers は使えない。
+      // → 補足A「go_router と FirebaseAnalyticsObserver の注意点」を参照。
     );
   }
 }

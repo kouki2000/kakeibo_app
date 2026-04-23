@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakeibo_app/core/database/app_database.dart' as db;
 import 'package:kakeibo_app/core/firebase/firestore_service.dart';
 import 'package:kakeibo_app/features/transaction/model/transaction_item.dart';
+import 'package:kakeibo_app/core/analytics/analytics_service.dart';
 
 /// 取引リストを非同期で管理する Notifier。
 ///
@@ -46,6 +47,7 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   Future<void> addItem(TransactionItem item) async {
     final database = ref.read(db.appDatabaseProvider);
     final firestore = ref.read(firestoreServiceProvider);
+    final analytics = ref.read(analyticsServiceProvider);
 
     // 1. SQLite に挿入して採番IDを取得する
     final insertedId = await database.insertTransaction(
@@ -61,6 +63,19 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
     final saved = item.copyWith(id: insertedId.toString());
     final current = state.requireValue;
     state = AsyncData([saved, ...current]);
+
+    // 3. Analytics にイベントを送信する（unawaited で UI をブロックしない）
+    unawaited(
+      analytics
+          .logTransactionAdded(
+            categoryName: saved.category.name,
+            amount: saved.amount,
+            isIncome: saved.category.isIncome,
+          )
+          .catchError((Object e) {
+            debugPrint('[AnalyticsService] logTransactionAdded failed: $e');
+          }),
+    );
 
     // 3. Firestore に書き込む（unawaited で UI をブロックしない）
     // オフライン時は Firestore SDK が内部キューに積み、復帰後に自動送信する
@@ -78,6 +93,7 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
   Future<void> removeItem(String id) async {
     final database = ref.read(db.appDatabaseProvider);
     final firestore = ref.read(firestoreServiceProvider);
+    final analytics = ref.read(analyticsServiceProvider);
 
     // SQLite から削除する
     await database.deleteTransaction(int.parse(id));
@@ -85,6 +101,13 @@ class TransactionListNotifier extends AsyncNotifier<List<TransactionItem>> {
     // リストから除外して状態を更新する
     final current = state.requireValue;
     state = AsyncData(current.where((t) => t.id != id).toList());
+
+    // Analytics にイベントを送信する（unawaited で UI をブロックしない）
+    unawaited(
+      analytics.logTransactionDeleted(transactionId: id).catchError((Object e) {
+        debugPrint('[AnalyticsService] logTransactionDeleted failed: $e');
+      }),
+    );
 
     // Firestore から削除する（unawaited で UI をブロックしない）
     unawaited(
